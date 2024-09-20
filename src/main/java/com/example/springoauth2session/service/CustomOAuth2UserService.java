@@ -2,6 +2,9 @@ package com.example.springoauth2session.service;
 
 import com.example.springoauth2session.dto.*;
 import com.example.springoauth2session.dto.GoogleResponse;
+import com.example.springoauth2session.entity.UserEntity;
+import com.example.springoauth2session.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -9,10 +12,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // DefaultOAuth2UserService는 Spring Security가 제공하는 기본 OAuth2UserService 구현체로,
     // OAuth2 사용자 정보를 가져오는 역할을 한다.
 
+    private final UserRepository userRepository;
 
     // OAuth2 인증 요청이 들어오면, 사용자의 정보를 가져오는 메서드를 재정의한다.
     @Override
@@ -52,7 +57,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // 해당 OAuth2 공급자를 처리할 수 없으므로, null을 반환한다.
         }
 
-        String role = "ROLE_USER";
+        String username = oAuth2Response.getProvider() + oAuth2Response.getProviderId();
+
+        UserEntity existData = userRepository.findByUsername(username);
+
+        String role = null;
+        if (existData == null) {
+            UserEntity userEntity = new UserEntity();
+
+            userEntity.setUsername(username);
+            userEntity.setEmail(oAuth2Response.getEmail());
+            userEntity.setRole("ROLE_USER");
+
+            userRepository.save(userEntity);
+        }
+        else {
+            role = existData.getRole();
+
+            existData.setEmail(oAuth2Response.getEmail());
+
+            userRepository.save(existData);
+        }
 
         return new CustomeOAuth2User(oAuth2Response, role);
 
