@@ -33,6 +33,7 @@ public class SecurityConfig {
         http
 //                .oauth2Login(Customizer.withDefaults());
                 .oauth2Login((oauth) -> oauth
+                        .loginPage("/login") // Oauth2에서 제공하는 로그인 페이지가 아닌 커스텀한 로그인 페이지를 띄우기 위해 컨트롤러 경로를 명시.
                         .userInfoEndpoint((userInfoEndpointConfig ->
                                 userInfoEndpointConfig.userService(customOAuth2UserService))));
         http
